@@ -1,10 +1,12 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
 import { AuthDto } from 'src/dto/auth.dto';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { REQUEST } from '@nestjs/core';
+import { Util } from 'src/util/util';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +14,8 @@ export class AuthService {
     private authRepo: AuthRepo,
     private config: ConfigService,
     private jwt: JwtService,
+    @Inject(REQUEST) private request: any,
+    private util: Util,
   ) {}
 
   async register(body: AuthDto) {
@@ -69,6 +73,27 @@ export class AuthService {
       message: 'login success',
       data: {
         token: token,
+      },
+    });
+  }
+
+  async getProfile() {
+    const user = this.util.getUserFromHeader(this.request);
+    console.log('user', user);
+
+    if (!user) {
+      return new HttpRespone().build({
+        statusCode: HttpStatus.FORBIDDEN,
+        message: 'Forbiden resource',
+        type: 'error',
+      });
+    }
+
+    return new HttpRespone().build({
+      message: 'success',
+      data: {
+        username: user.username,
+        role: user.role,
       },
     });
   }
