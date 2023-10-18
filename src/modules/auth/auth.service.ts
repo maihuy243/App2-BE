@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { REQUEST } from '@nestjs/core';
-import { Util } from 'src/util/util';
+import { constant_jwt } from 'src/config/constant-jwt';
 
 @Injectable()
 export class AuthService {
@@ -15,11 +15,13 @@ export class AuthService {
     private config: ConfigService,
     private jwt: JwtService,
     @Inject(REQUEST) private request: any,
-    private util: Util,
   ) {}
 
   async register(body: AuthDto) {
-    const checkExist = this.authRepo.findAccount('username', body.username);
+    const checkExist = await this.authRepo.findAccount(
+      'username',
+      body.username,
+    );
     if (checkExist) {
       return new HttpRespone().build({
         statusCode: HttpStatus.FOUND,
@@ -50,7 +52,7 @@ export class AuthService {
   async login(body: AuthDto) {
     const findAcc = await this.authRepo.findAccount('username', body.username);
 
-    const isMatch = bcrypt.compareSync(body.password, findAcc?.hashPass);
+    const isMatch = bcrypt.compareSync(body.password, findAcc?.hashPass || '');
 
     if (!findAcc || !isMatch) {
       return new HttpRespone().build({
@@ -63,24 +65,28 @@ export class AuthService {
     const payloadGenToken = {
       username: findAcc.username,
       password: findAcc.password,
+      role: findAcc.role,
     };
 
-    const token = await this.jwt.signAsync(JSON.stringify(payloadGenToken), {
-      secret: this.config.get('SECRET'),
+    const token = await this.jwt.signAsync(payloadGenToken, {
+      expiresIn: constant_jwt.expresIn,
+    });
+
+    const refresToken = await this.jwt.signAsync(payloadGenToken, {
+      expiresIn: constant_jwt.refresh_expresIn,
     });
 
     return new HttpRespone().build({
       message: 'login success',
       data: {
         token: token,
+        refresToken: refresToken,
       },
     });
   }
 
   async getProfile() {
-    const user = this.util.getUserFromHeader(this.request);
-    console.log('user', user);
-
+    const { user } = this.request;
     if (!user) {
       return new HttpRespone().build({
         statusCode: HttpStatus.FORBIDDEN,
@@ -88,7 +94,6 @@ export class AuthService {
         type: 'error',
       });
     }
-
     return new HttpRespone().build({
       message: 'success',
       data: {
