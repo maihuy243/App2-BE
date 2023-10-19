@@ -13,6 +13,14 @@ export class HttpRespone<T> {
       ...args,
     };
   }
+
+  public buildError(args?: any): ResponsePayload<T> {
+    return {
+      statusCode: HttpStatus.BAD_REQUEST,
+      type: 'error',
+      ...args,
+    };
+  }
 }
 
 class ResponsePayload<T> {

@@ -87,19 +87,24 @@ export class AuthService {
 
   async getProfile() {
     const { user } = this.request;
-    if (!user) {
+    const getUser = await this.authRepo.findAccount(
+      'username',
+      user?.username || '',
+    );
+
+    if (!user || !getUser) {
       return new HttpRespone().build({
         statusCode: HttpStatus.FORBIDDEN,
         message: 'Forbiden resource',
         type: 'error',
       });
     }
+    delete getUser.password;
+    delete getUser.hashPass;
+
     return new HttpRespone().build({
       message: 'success',
-      data: {
-        username: user.username,
-        role: user.role,
-      },
+      data: getUser,
     });
   }
 }
