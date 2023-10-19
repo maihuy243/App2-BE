@@ -22,9 +22,19 @@ export class MartController {
     return this.martService.createProduct(body);
   }
 
+  @Post('update-product')
+  updateProduct(@Body() body: MartProductDto) {
+    return this.martService.updateProduct(body);
+  }
+
   @Get('list-product')
   getListProduct(@Query() query: string) {
     return this.martService.getListProduct(query);
+  }
+
+  @Get('stockout')
+  getListStockOut() {
+    return this.martService.getListStockOut();
   }
 
   @Delete('delete-product/:id')

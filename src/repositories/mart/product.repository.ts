@@ -33,8 +33,17 @@ export class MartProductRepo extends Repository<MartProductEntity> {
     query
       .leftJoinAndSelect(MartProductInventoryEntity, 'i', 'i.productId = p.id')
       .where('p.isDelete = false');
-    if (queryPayload) {
+
+    // search
+    if (Object.keys(queryPayload).length) {
+      if (queryPayload.type) {
+        query.andWhere('p.type = :type', {
+          type: queryPayload.type,
+        });
+      }
     }
+
+    // end Search
     query
       .select([
         'p.id ',
@@ -51,5 +60,15 @@ export class MartProductRepo extends Repository<MartProductEntity> {
       .orderBy('p.productCode', 'DESC');
 
     return await query.getRawMany();
+  }
+
+  async getListStockOut() {
+    return await this.createQueryBuilder('p')
+      .select('i.type as type')
+      .addSelect('SUM(i.totalQuantity) as totalQuantity')
+      .leftJoin(MartProductInventoryEntity, 'i', 'p.id = i.productId')
+      .where('i.totalQuantity > 0')
+      .groupBy('i.type')
+      .getRawMany();
   }
 }

@@ -9,6 +9,9 @@ export class MartProductInventoryEntity extends BaseEntity {
   @Column()
   productId: number;
 
+  @Column()
+  type: string;
+
   @Column({ default: 0 })
   totalQuantity: number;
 }
