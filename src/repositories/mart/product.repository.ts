@@ -34,7 +34,6 @@ export class MartProductRepo extends Repository<MartProductEntity> {
       .leftJoinAndSelect(MartProductInventoryEntity, 'i', 'i.productId = p.id')
       .where('p.isDelete = false');
     if (queryPayload) {
-      console.log('queryPayload', queryPayload);
     }
     query
       .select([

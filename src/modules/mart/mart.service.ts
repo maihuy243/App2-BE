@@ -68,7 +68,6 @@ export class MartService {
 
   async deleteProduct(param: any) {
     const checkExist = await this.productRepo.findProduct('id', param.id);
-    console.log('checkExist', checkExist);
 
     if (!checkExist) {
       return new HttpRespone().buildError({ message: 'Product do not exist' });
