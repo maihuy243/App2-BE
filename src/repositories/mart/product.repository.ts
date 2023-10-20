@@ -16,9 +16,9 @@ export class MartProductRepo extends Repository<MartProductEntity> {
           id: value,
         });
         break;
-      case 'productCode':
-        query.andWhere('b.productCode = :productCode', {
-          productCode: value,
+      case 'productName':
+        query.andWhere('b.productName = :productName', {
+          productName: value,
         });
         break;
       default:
@@ -64,11 +64,10 @@ export class MartProductRepo extends Repository<MartProductEntity> {
 
   async getListStockOut() {
     return await this.createQueryBuilder('p')
-      .select('i.type as type')
-      .addSelect('SUM(i.totalQuantity) as totalQuantity')
+      .select(['p.type ', 'SUM(i.totalQuantity) as totalQuantity'])
       .leftJoin(MartProductInventoryEntity, 'i', 'p.id = i.productId')
       .where('i.totalQuantity > 0')
-      .groupBy('i.type')
+      .groupBy('p.type')
       .getRawMany();
   }
 }

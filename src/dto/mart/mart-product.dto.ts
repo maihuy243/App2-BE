@@ -7,9 +7,6 @@ export class MartProductDto extends BaseEntity {
   productName: string;
 
   @IsNotEmpty()
-  productCode: string;
-
-  @IsNotEmpty()
   price: number;
 
   @IsNotEmpty()

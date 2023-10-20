@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
 import { MartProductEntity, MartProductInventoryEntity } from 'src/entities';
+import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
 import { MartProductInventoryRepo } from 'src/repositories/mart/product-inventory.repository';
 import { MartProductRepo } from 'src/repositories/mart/product.repository';
+import { Util } from 'src/util/util';
 import { DataSource } from 'typeorm';
 
 @Injectable()
@@ -12,17 +14,19 @@ export class MartService {
     private productRepo: MartProductRepo,
     private dataSource: DataSource,
     private productInventoryRepo: MartProductInventoryRepo,
+    private productCountRepo: MartProductCountRepo,
+    private util: Util,
   ) {}
 
   async createProduct(body: MartProductDto) {
     const checkExistProduct = await this.productRepo.findProduct(
-      'productCode',
-      body.productCode,
+      'productName',
+      body.productName,
     );
 
     if (checkExistProduct) {
       return new HttpRespone().buildError({
-        message: 'The productCode already exists',
+        message: 'The productName already exists',
       });
     }
 
@@ -33,7 +37,29 @@ export class MartService {
     // Begin transaction
 
     try {
-      const productEntity = this.productRepo.create(body);
+      const checkExistCount = await this.productCountRepo.getCount();
+
+      if (checkExistCount) {
+        await this.productCountRepo.update(
+          {
+            id: checkExistCount.id,
+          },
+          {
+            count: checkExistCount.count + 1,
+          },
+        );
+      } else {
+        await this.productCountRepo.save({
+          count: 1,
+        });
+      }
+      const count = await this.productCountRepo.getCount();
+
+      const productEntity = this.productRepo.create({
+        ...body,
+        productCode: this.util.genProductCode(count.count),
+      });
+
       const product = await queryRunner.manager.save(
         MartProductEntity,
         productEntity,
