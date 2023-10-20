@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from 'src/guard/auth.guard';
 import { MartService } from './mart.service';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
+import { MartCardDto } from 'src/dto/mart/mart-product-cart.dto';
 
 @Controller('mart')
 @UseGuards(AuthGuard)
@@ -40,5 +41,20 @@ export class MartController {
   @Delete('delete-product/:id')
   deleteProduct(@Param() param) {
     return this.martService.deleteProduct(param);
+  }
+
+  @Post('card')
+  createCart(@Body() body: MartCardDto) {
+    return this.martService.createCart(body);
+  }
+
+  @Get('cart')
+  getCard(@Query() query) {
+    return this.martService.getCard(query);
+  }
+
+  @Post('payment')
+  payment(@Body() body: MartCardDto) {
+    return this.martService.payment(body);
   }
 }

@@ -1,9 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { MartProductUserRepo } from './../../repositories/mart/product-user-details.repository';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
+import {
+  MartCardDto,
+  ProductCardDto,
+} from 'src/dto/mart/mart-product-cart.dto';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
-import { MartProductEntity, MartProductInventoryEntity } from 'src/entities';
+import {
+  MartProductCartEntity,
+  MartProductEntity,
+  MartProductInventoryEntity,
+  MartProductPaymentEntity,
+} from 'src/entities';
+import { AuthRepo } from 'src/repositories/auth.repository';
+import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
 import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
 import { MartProductInventoryRepo } from 'src/repositories/mart/product-inventory.repository';
+import { MartProductPaymentRepo } from 'src/repositories/mart/product-payment.repository';
 import { MartProductRepo } from 'src/repositories/mart/product.repository';
 import { Util } from 'src/util/util';
 import { DataSource } from 'typeorm';
@@ -13,9 +26,13 @@ export class MartService {
   constructor(
     private productRepo: MartProductRepo,
     private dataSource: DataSource,
-    private productInventoryRepo: MartProductInventoryRepo,
     private productCountRepo: MartProductCountRepo,
     private util: Util,
+    private cartRepo: MartProductCardRepo,
+    private paymentRepo: MartProductPaymentRepo,
+    private detailsUserRepo: MartProductUserRepo,
+    private inventoryRepo: MartProductInventoryRepo,
+    private authRepo: AuthRepo,
   ) {}
 
   async createProduct(body: MartProductDto) {
@@ -129,5 +146,148 @@ export class MartService {
     return new HttpRespone().build({
       data: listStockOut,
     });
+  }
+
+  async createCart(body: MartCardDto) {
+    const checkAccount = await this.authRepo.findOneBy({ id: body.userId });
+
+    if (!checkAccount) {
+      throw new HttpException('User not found', HttpStatus.FORBIDDEN);
+    }
+
+    const checkExistCardByUser = await this.cartRepo.findOneBy({
+      userId: body.userId,
+    });
+
+    if (checkExistCardByUser) {
+      await this.cartRepo.update(
+        { userId: body.userId },
+        {
+          totalPrice: body.totalPrice,
+          data: JSON.stringify(body),
+          coupon: body.useCoupon ? body.coupon : null,
+        },
+      );
+      return new HttpRespone().build({
+        message: 'Update card success',
+      });
+    } else {
+      const cartEntity = this.cartRepo.create({
+        userId: body.userId,
+        totalPrice: body.totalPrice,
+        data: JSON.stringify(body),
+        coupon: body.useCoupon ? body.coupon : null,
+      });
+
+      await this.cartRepo.save(cartEntity);
+
+      return new HttpRespone().build({
+        message: 'Create card success',
+      });
+    }
+  }
+
+  async getCard(query) {
+    if (!query.userId) {
+      return new HttpRespone().buildError({
+        message: 'User not found',
+      });
+    }
+
+    const card = await this.cartRepo.findOneBy({ userId: query.userId });
+    if (!card) {
+      return new HttpRespone().build({
+        data: card,
+      });
+    }
+
+    return new HttpRespone().build({
+      data: JSON.parse(card.data),
+    });
+  }
+
+  async payment(body: MartCardDto) {
+    const checkAccount = await this.authRepo.findOneBy({ id: body.userId });
+
+    if (!checkAccount) {
+      throw new HttpException('User not found', HttpStatus.FORBIDDEN);
+    }
+
+    if (!body.paymentType) {
+      return new HttpRespone().buildError({
+        message: 'Please select payment method',
+      });
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // taọ record payment
+      await queryRunner.manager.save(MartProductPaymentEntity, {
+        userId: body.userId,
+        paymentType: body.paymentType,
+        data: JSON.stringify(body),
+        totalPrice: body.totalPrice,
+        point: body.point,
+      });
+
+      // xóa giỏ hàng
+      await queryRunner.manager.delete(MartProductCartEntity, {
+        userId: body.userId,
+      });
+
+      // update point cho user
+      const getDetailUser = await this.detailsUserRepo.findOneBy({
+        userId: body.userId,
+      });
+
+      if (getDetailUser) {
+        await queryRunner.manager.update(
+          MartProductPaymentEntity,
+          { userId: body.userId },
+          { ...getDetailUser, point: getDetailUser.point + body.point },
+        );
+      } else {
+        await queryRunner.manager.save(MartProductPaymentEntity, {
+          ...getDetailUser,
+          point: body.point,
+        });
+      }
+
+      // set tồn kho cho sản phẩm
+
+      body.products.forEach(async (i: ProductCardDto) => {
+        const inventoryByProduct = await this.inventoryRepo.findOneBy({
+          productId: i.productId,
+        });
+        await queryRunner.manager.update(
+          MartProductInventoryEntity,
+          { productId: i.productId },
+          {
+            totalQuantity:
+              inventoryByProduct.totalQuantity - i.quantity > 0
+                ? inventoryByProduct.totalQuantity - i.quantity
+                : 0,
+          },
+        );
+      });
+
+      await queryRunner.commitTransaction();
+
+      return new HttpRespone().build({
+        message: 'Payment success',
+      });
+    } catch (error) {
+      console.log('error', error);
+
+      await queryRunner.rollbackTransaction();
+      return new HttpRespone().buildError({
+        message: 'Payment error',
+      });
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
