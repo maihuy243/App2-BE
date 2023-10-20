@@ -1,4 +1,5 @@
 import { Constant } from 'src/config/Constant';
+import { RankEnum } from 'src/enum/discount-by-rank.enum';
 
 export class Util {
   genProductCode(number: number): string {
@@ -10,5 +11,13 @@ export class Util {
       parttern.LENGTH - lengthNumber,
     );
     return partternString + number;
+  }
+
+  getRankByPoint(listRank, point): RankEnum {
+    if (!listRank || !point || !listRank.length) return RankEnum.SILVER;
+    const findRankByPoint = listRank.find((i) => point >= i.pointRequired);
+    console.log('listRank', listRank);
+
+    return findRankByPoint?.rank || RankEnum.SILVER;
   }
 }

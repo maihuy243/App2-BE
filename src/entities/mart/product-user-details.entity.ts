@@ -13,7 +13,7 @@ export class MartProductUserDetailsEntity extends BaseEntity {
   point: number;
 
   @Column()
-  rank: string;
+  rank: number;
 
   @Column({ default: 0 })
   prepaidWallet: number;

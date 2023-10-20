@@ -3,7 +3,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
 import {
   MartCardDto,
-  ProductCardDto,
+  // ProductCardDto,
 } from 'src/dto/mart/mart-product-cart.dto';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
 import {
@@ -11,12 +11,14 @@ import {
   MartProductEntity,
   MartProductInventoryEntity,
   MartProductPaymentEntity,
+  MartProductUserDetailsEntity,
 } from 'src/entities';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
 import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
 import { MartProductInventoryRepo } from 'src/repositories/mart/product-inventory.repository';
 import { MartProductPaymentRepo } from 'src/repositories/mart/product-payment.repository';
+import { MartProductRankRepo } from 'src/repositories/mart/product-rank.repository';
 import { MartProductRepo } from 'src/repositories/mart/product.repository';
 import { Util } from 'src/util/util';
 import { DataSource } from 'typeorm';
@@ -33,6 +35,7 @@ export class MartService {
     private detailsUserRepo: MartProductUserRepo,
     private inventoryRepo: MartProductInventoryRepo,
     private authRepo: AuthRepo,
+    private rankRepo: MartProductRankRepo,
   ) {}
 
   async createProduct(body: MartProductDto) {
@@ -243,36 +246,52 @@ export class MartService {
         userId: body.userId,
       });
 
+      const listRank = await this.rankRepo.find({
+        order: {
+          pointRequired: 'DESC',
+        },
+      });
+
       if (getDetailUser) {
         await queryRunner.manager.update(
-          MartProductPaymentEntity,
+          MartProductUserDetailsEntity,
           { userId: body.userId },
-          { ...getDetailUser, point: getDetailUser.point + body.point },
+          {
+            ...getDetailUser,
+            point: getDetailUser.point + body.point,
+            rank: this.util.getRankByPoint(
+              listRank,
+              getDetailUser.point + body.point,
+            ),
+          },
         );
       } else {
-        await queryRunner.manager.save(MartProductPaymentEntity, {
+        await queryRunner.manager.save(MartProductUserDetailsEntity, {
           ...getDetailUser,
           point: body.point,
+          userId: body.userId,
+          rank: this.util.getRankByPoint(listRank, body.point),
         });
       }
 
       // set tồn kho cho sản phẩm
 
-      body.products.forEach(async (i: ProductCardDto) => {
+      for (const product of body.products) {
         const inventoryByProduct = await this.inventoryRepo.findOneBy({
-          productId: i.productId,
+          productId: product.productId,
         });
+
         await queryRunner.manager.update(
           MartProductInventoryEntity,
-          { productId: i.productId },
+          { productId: product.productId },
           {
             totalQuantity:
-              inventoryByProduct.totalQuantity - i.quantity > 0
-                ? inventoryByProduct.totalQuantity - i.quantity
+              inventoryByProduct.totalQuantity - product.quantity > 0
+                ? inventoryByProduct.totalQuantity - product.quantity
                 : 0,
           },
         );
-      });
+      }
 
       await queryRunner.commitTransaction();
 
@@ -289,5 +308,21 @@ export class MartService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getListPayment() {
+    const list = await this.paymentRepo.find();
+    return new HttpRespone().build({
+      message: 'Get list payment success',
+      data: list.map((i) => ({ ...i, data: JSON.parse(i.data) })),
+    });
+  }
+
+  async getDataSale() {
+    const dataSale = await this.paymentRepo.getDataSale();
+    return new HttpRespone().build({
+      message: 'get data sale success',
+      data: dataSale,
+    });
   }
 }

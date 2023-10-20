@@ -57,4 +57,14 @@ export class MartController {
   payment(@Body() body: MartCardDto) {
     return this.martService.payment(body);
   }
+
+  @Get('payment')
+  getListPayment() {
+    return this.martService.getListPayment();
+  }
+
+  @Get('sale')
+  getDataSale() {
+    return this.martService.getDataSale();
+  }
 }

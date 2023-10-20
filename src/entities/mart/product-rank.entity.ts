@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
-import { DiscountByRankEnum } from 'src/enum/discount-by-rank.enum';
+import { RankEnum } from 'src/enum/discount-by-rank.enum';
 
 @Entity('mart-product-rank')
 export class MartProductRankEntity extends BaseEntity {
@@ -8,7 +8,7 @@ export class MartProductRankEntity extends BaseEntity {
   id: number;
 
   @Column()
-  rank: DiscountByRankEnum;
+  rank: RankEnum;
 
   @Column()
   pointRequired: number;
