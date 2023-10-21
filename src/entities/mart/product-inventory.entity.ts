@@ -10,5 +10,5 @@ export class MartProductInventoryEntity extends BaseEntity {
   productId: number;
 
   @Column({ default: 1 })
-  totalQuantity: number;
+  stockOut: number;
 }

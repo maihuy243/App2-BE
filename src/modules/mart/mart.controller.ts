@@ -67,4 +67,9 @@ export class MartController {
   getDataSale() {
     return this.martService.getDataSale();
   }
+
+  @Post('wallet')
+  addWallet(@Body() body) {
+    return this.martService.addWallet(body);
+  }
 }

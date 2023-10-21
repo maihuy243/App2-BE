@@ -7,7 +7,7 @@ export const dataSourceOption: DataSourceOptions = {
   host: 'localhost',
   port: 5432,
   username: 'postgres',
-  password: 'root',
+  password: 'admin',
   database: 'app',
   synchronize: true,
   entities: Object.values(entities),

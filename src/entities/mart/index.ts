@@ -4,6 +4,5 @@ export * from './product-inventory.entity';
 export * from './product-payment.entity';
 export * from './product-count.entity';
 export * from './product-cart.entity';
-export * from './product-user-details.entity';
 export * from './product-coupon.entity';
 export * from './product-rank.entity';

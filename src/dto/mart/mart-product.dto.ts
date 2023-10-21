@@ -23,4 +23,7 @@ export class MartProductDto extends BaseEntity {
 
   @IsNotEmpty()
   userId: number;
+
+  @IsOptional()
+  stockOut: number;
 }

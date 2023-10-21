@@ -36,6 +36,10 @@ export class MartProductRepo extends Repository<MartProductEntity> {
 
     // search
     if (Object.keys(queryPayload).length) {
+      if (!queryPayload.isAll) {
+        query.andWhere('i.stockOut > 0');
+      }
+
       if (queryPayload.type) {
         query.andWhere('p.type = :type', {
           type: queryPayload.type,
@@ -55,7 +59,7 @@ export class MartProductRepo extends Repository<MartProductEntity> {
         'p.sale ',
         'p.discount ',
         'p.priceDiscount as "priceDiscount" ',
-        'i.totalQuantity as "totalQuantity"',
+        'i.stockOut as "stockOut"',
       ])
       .orderBy('p.productCode', 'DESC');
 
@@ -64,9 +68,9 @@ export class MartProductRepo extends Repository<MartProductEntity> {
 
   async getListStockOut() {
     return await this.createQueryBuilder('p')
-      .select(['p.type ', 'SUM(i.totalQuantity) as totalQuantity'])
+      .select(['p.type ', 'SUM(i.stockOut) as totalQuantity'])
       .leftJoin(MartProductInventoryEntity, 'i', 'p.id = i.productId')
-      .where('i.totalQuantity > 0')
+      .where('i.stockOut > 0')
       .groupBy('p.type')
       .getRawMany();
   }

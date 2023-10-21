@@ -1,4 +1,3 @@
-import { MartProductUserRepo } from './../../repositories/mart/product-user-details.repository';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
 import {
@@ -11,7 +10,7 @@ import {
   MartProductEntity,
   MartProductInventoryEntity,
   MartProductPaymentEntity,
-  MartProductUserDetailsEntity,
+  UserEntity,
 } from 'src/entities';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
@@ -32,7 +31,6 @@ export class MartService {
     private util: Util,
     private cartRepo: MartProductCardRepo,
     private paymentRepo: MartProductPaymentRepo,
-    private detailsUserRepo: MartProductUserRepo,
     private inventoryRepo: MartProductInventoryRepo,
     private authRepo: AuthRepo,
     private rankRepo: MartProductRankRepo,
@@ -87,13 +85,13 @@ export class MartService {
       if (!product) {
         await queryRunner.rollbackTransaction();
         return new HttpRespone().buildError({
-          message: 'Create product error',
+          message: 'Create product error 1',
         });
       }
 
       await queryRunner.manager.save(MartProductInventoryEntity, {
         productId: product.id,
-        totalQuantity: 1,
+        stockOut: 1,
         type: product.type,
       });
       await queryRunner.commitTransaction();
@@ -101,9 +99,10 @@ export class MartService {
         message: 'Create product success',
       });
     } catch (error) {
+      console.log('error', error);
       await queryRunner.rollbackTransaction();
       return new HttpRespone().buildError({
-        message: 'Create product error',
+        message: 'Create product error 2',
       });
     } finally {
       await queryRunner.release();
@@ -116,8 +115,18 @@ export class MartService {
         message: 'Update product error',
       });
     }
+    const payloadProducRepo = { ...body };
+    delete payloadProducRepo.stockOut;
+    await this.productRepo.update({ id: body.id }, payloadProducRepo);
 
-    await this.productRepo.update({ id: body.id }, body);
+    if (body.stockOut) {
+      await this.inventoryRepo.update(
+        { productId: body.id },
+        {
+          stockOut: body.stockOut,
+        },
+      );
+    }
 
     return new HttpRespone().build({
       message: 'Update product success',
@@ -231,9 +240,11 @@ export class MartService {
       await queryRunner.manager.save(MartProductPaymentEntity, {
         userId: body.userId,
         paymentType: body.paymentType,
+        discountByCoupon: body.discountByCoupon,
         data: JSON.stringify(body),
-        totalPrice: body.totalPrice,
-        point: body.point,
+        totalPrice: String(body.totalPrice),
+        point: String(body.point),
+        shippingCharges: body.shippingCharges,
       });
 
       // xóa giỏ hàng
@@ -242,8 +253,8 @@ export class MartService {
       });
 
       // update point cho user
-      const getDetailUser = await this.detailsUserRepo.findOneBy({
-        userId: body.userId,
+      const getDetailUser = await this.authRepo.findOneBy({
+        id: body.userId,
       });
 
       const listRank = await this.rankRepo.find({
@@ -254,11 +265,12 @@ export class MartService {
 
       if (getDetailUser) {
         await queryRunner.manager.update(
-          MartProductUserDetailsEntity,
-          { userId: body.userId },
+          UserEntity,
+          { id: body.userId },
           {
             ...getDetailUser,
             point: getDetailUser.point + body.point,
+            wallet: String(Number(getDetailUser.wallet) - body.totalPrice),
             rank: this.util.getRankByPoint(
               listRank,
               getDetailUser.point + body.point,
@@ -266,9 +278,9 @@ export class MartService {
           },
         );
       } else {
-        await queryRunner.manager.save(MartProductUserDetailsEntity, {
+        await queryRunner.manager.save(UserEntity, {
           ...getDetailUser,
-          point: body.point,
+          point: String(body.point),
           userId: body.userId,
           rank: this.util.getRankByPoint(listRank, body.point),
         });
@@ -285,9 +297,9 @@ export class MartService {
           MartProductInventoryEntity,
           { productId: product.productId },
           {
-            totalQuantity:
-              inventoryByProduct.totalQuantity - product.quantity > 0
-                ? inventoryByProduct.totalQuantity - product.quantity
+            stockOut:
+              inventoryByProduct.stockOut - product.quantity > 0
+                ? inventoryByProduct.stockOut - product.quantity
                 : 0,
           },
         );
@@ -324,5 +336,20 @@ export class MartService {
       message: 'get data sale success',
       data: dataSale,
     });
+  }
+
+  async addWallet(body) {
+    const checkUser = await this.authRepo.findOneBy({ id: body.id });
+    if (!checkUser) {
+      return new HttpRespone().buildError({ message: 'user not found' });
+    }
+
+    await this.authRepo.update(
+      { id: checkUser.id },
+      {
+        wallet: String(Number(checkUser.wallet) + Number(body.wallet)),
+      },
+    );
+    return new HttpRespone().build({ message: 'add wallet success' });
   }
 }

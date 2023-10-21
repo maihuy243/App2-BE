@@ -17,11 +17,17 @@ export class MartProductPaymentEntity extends BaseEntity {
   paymentType: TypePaymentEnum;
 
   @Column()
+  discountByCoupon: number;
+
+  @Column({ default: 0 })
+  shippingCharges: number;
+
+  @Column()
   data: string;
 
-  @Column()
-  totalPrice: number;
+  @Column({ default: '0' })
+  totalPrice: string;
 
-  @Column()
-  point: number;
+  @Column({ default: '0' })
+  point: string;
 }

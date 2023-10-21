@@ -8,7 +8,6 @@ import { MartProductPaymentRepo } from 'src/repositories/mart/product-payment.re
 import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
 import { Util } from 'src/util/util';
 import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
-import { MartProductUserRepo } from 'src/repositories/mart/product-user-details.repository';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductRankRepo } from 'src/repositories/mart/product-rank.repository';
 
@@ -23,7 +22,6 @@ import { MartProductRankRepo } from 'src/repositories/mart/product-rank.reposito
     MartProductPaymentRepo,
     MartProductCountRepo,
     MartProductCardRepo,
-    MartProductUserRepo,
     MartProductRankRepo,
     AuthRepo,
     Util,

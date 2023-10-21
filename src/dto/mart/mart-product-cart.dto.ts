@@ -22,6 +22,12 @@ export class MartCardDto {
 
   @IsOptional()
   paymentType: TypePaymentEnum;
+
+  @IsOptional()
+  discountByCoupon: number;
+
+  @IsOptional()
+  shippingCharges: number;
 }
 
 export class ProductCardDto {
