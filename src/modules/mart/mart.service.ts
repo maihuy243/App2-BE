@@ -12,6 +12,7 @@ import {
   MartProductPaymentEntity,
   UserEntity,
 } from 'src/entities';
+import { TypePaymentEnum } from 'src/enum/payment.enum';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
 import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
@@ -270,7 +271,12 @@ export class MartService {
           {
             ...getDetailUser,
             point: getDetailUser.point + body.point,
-            wallet: String(Number(getDetailUser.wallet) - body.totalPrice),
+            wallet:
+              body.paymentType == TypePaymentEnum.WALLET
+                ? String(
+                    (Number(getDetailUser.wallet) - body.totalPrice).toFixed(2),
+                  )
+                : getDetailUser.wallet,
             rank: this.util.getRankByPoint(
               listRank,
               getDetailUser.point + body.point,

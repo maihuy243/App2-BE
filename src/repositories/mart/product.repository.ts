@@ -34,12 +34,12 @@ export class MartProductRepo extends Repository<MartProductEntity> {
       .leftJoinAndSelect(MartProductInventoryEntity, 'i', 'i.productId = p.id')
       .where('p.isDelete = false');
 
+    if (!queryPayload.isAll) {
+      query.andWhere('i.stockOut > 0');
+    }
+
     // search
     if (Object.keys(queryPayload).length) {
-      if (!queryPayload.isAll) {
-        query.andWhere('i.stockOut > 0');
-      }
-
       if (queryPayload.type) {
         query.andWhere('p.type = :type', {
           type: queryPayload.type,
