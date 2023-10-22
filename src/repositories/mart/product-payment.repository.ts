@@ -11,7 +11,7 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
     return await this.createQueryBuilder('p')
       .select([
         `DATE_TRUNC('month',date_payment) as month`,
-        'SUM(p.total_price) as Total',
+        'ROUND(SUM(p.total_price::float)) as Total',
       ])
       .groupBy(`DATE_TRUNC('month',date_payment)`)
       .getRawMany();
