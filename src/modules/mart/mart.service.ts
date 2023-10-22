@@ -92,7 +92,7 @@ export class MartService {
 
       await queryRunner.manager.save(MartProductInventoryEntity, {
         productId: product.id,
-        stockOut: 1,
+        stockOut: body.stockOut || 1,
         type: product.type,
       });
       await queryRunner.commitTransaction();
@@ -168,17 +168,19 @@ export class MartService {
       throw new HttpException('User not found', HttpStatus.FORBIDDEN);
     }
 
-    const checkExistCardByUser = await this.cartRepo.findOneBy({
+    const checkExistCartByUser = await this.cartRepo.findOneBy({
       userId: body.userId,
     });
 
-    if (checkExistCardByUser) {
+    if (checkExistCartByUser) {
       await this.cartRepo.update(
         { userId: body.userId },
         {
-          totalPrice: body.totalPrice,
+          totalPrice: body.totalPrice.toString(),
           data: JSON.stringify(body),
           coupon: body.useCoupon ? body.coupon : null,
+          paymentType: body.paymentType,
+          point: body.point.toString(),
         },
       );
       return new HttpRespone().build({
@@ -187,7 +189,7 @@ export class MartService {
     } else {
       const cartEntity = this.cartRepo.create({
         userId: body.userId,
-        totalPrice: body.totalPrice,
+        totalPrice: body.totalPrice.toString(),
         data: JSON.stringify(body),
         coupon: body.useCoupon ? body.coupon : null,
       });

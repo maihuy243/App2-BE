@@ -43,7 +43,7 @@ export class MartController {
     return this.martService.deleteProduct(param);
   }
 
-  @Post('card')
+  @Post('cart')
   createCart(@Body() body: MartCardDto) {
     return this.martService.createCart(body);
   }
