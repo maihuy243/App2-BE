@@ -1,4 +1,4 @@
-import { MartProductPaymentEntity } from 'src/entities';
+import { MartProductPaymentEntity, UserEntity } from 'src/entities';
 import { DataSource, EntityRepository, Repository } from 'typeorm';
 
 @EntityRepository(MartProductPaymentEntity)
@@ -14,6 +14,22 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
         'SUM(p.total_price) as Total',
       ])
       .groupBy(`DATE_TRUNC('month',date_payment)`)
+      .getRawMany();
+  }
+
+  async getListPayment() {
+    return await this.createQueryBuilder('p')
+      .leftJoin(UserEntity, 'u', 'u.id = p.userId')
+      .select([
+        'p.date_payment as "datePayment"',
+        'p.paymentType as "paymentType"',
+        'p.discountByCoupon as "discountByCoupon" ',
+        'p.shippingCharges as "shippingCharges"',
+        'p.data as data',
+        'p.totalPrice as "totalPrice"',
+        'p.point ',
+        'u.username ',
+      ])
       .getRawMany();
   }
 }

@@ -331,7 +331,7 @@ export class MartService {
   }
 
   async getListPayment() {
-    const list = await this.paymentRepo.find();
+    const list = await this.paymentRepo.getListPayment();
     return new HttpRespone().build({
       message: 'Get list payment success',
       data: list.map((i) => ({ ...i, data: JSON.parse(i.data) })),
