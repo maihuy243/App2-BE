@@ -137,6 +137,12 @@ export class MartService {
           stockOut: body.stockOut,
         },
       );
+
+      await this.importRepo.save({
+        productId: body.id,
+        quantity: body.stockOut,
+        userId: body.userId,
+      });
     }
 
     return new HttpRespone().build({
@@ -515,6 +521,14 @@ export class MartService {
         body.type === TYPE_API_UPDATE.CHANGE_STATUS
           ? 'Update Status success'
           : ' use coupone success',
+    });
+  }
+
+  async getHistoryImportStockOut() {
+    const list = await this.importRepo.getAllData();
+    return new HttpRespone().build({
+      data: list,
+      message: 'get history import stockout success',
     });
   }
 }

@@ -7,13 +7,10 @@ export class MartProductImportEntity extends BaseEntity {
   id: number;
 
   @Column()
-  productId: string;
+  productId: number;
 
   @Column()
   quantity: number;
-
-  @Column({ default: new Date() })
-  dateImport: Date;
 
   @Column()
   userId: number;

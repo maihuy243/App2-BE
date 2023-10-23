@@ -100,4 +100,9 @@ export class MartController {
   getCoupon(@Query() query: any) {
     return this.martService.getCoupon(query);
   }
+
+  @Get('history-import-stockout')
+  getHistoryImportStockOut() {
+    return this.martService.getHistoryImportStockOut();
+  }
 }
