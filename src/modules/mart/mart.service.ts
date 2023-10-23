@@ -5,6 +5,7 @@ import {
   // ProductCardDto,
 } from 'src/dto/mart/mart-product-cart.dto';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
+import { ValidateStockOutDto } from 'src/dto/mart/validate-stockout.dto';
 import {
   MartProductCartEntity,
   MartProductEntity,
@@ -378,6 +379,38 @@ export class MartService {
 
     return new HttpRespone().build({
       message: 'Truncate data success',
+    });
+  }
+
+  async validateStockout(data: ValidateStockOutDto[]) {
+    const listStockOut: {
+      productId: number;
+      isOutOfStock: boolean;
+      remainingProducts: number;
+      productName: string;
+    }[] = [];
+
+    for (const product of data) {
+      const findInventory = await this.inventoryRepo.findOneBy({
+        productId: product.productId,
+      });
+      if (
+        !findInventory ||
+        !findInventory.stockOut ||
+        product.quantity > findInventory.stockOut
+      ) {
+        listStockOut.push({
+          productName: product.productName,
+          productId: product.productId,
+          isOutOfStock: true,
+          remainingProducts: findInventory ? findInventory.stockOut : 0,
+        });
+      }
+    }
+
+    return new HttpRespone().build({
+      message: 'Validate success',
+      data: listStockOut,
     });
   }
 }

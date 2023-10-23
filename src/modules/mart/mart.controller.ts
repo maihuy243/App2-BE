@@ -12,6 +12,7 @@ import { AuthGuard } from 'src/guard/auth.guard';
 import { MartService } from './mart.service';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
 import { MartCardDto } from 'src/dto/mart/mart-product-cart.dto';
+import { ValidateStockOutDto } from 'src/dto/mart/validate-stockout.dto';
 
 @Controller('mart')
 @UseGuards(AuthGuard)
@@ -76,5 +77,10 @@ export class MartController {
   @Get('truncate-all')
   truncateData() {
     return this.martService.truncateData();
+  }
+
+  @Post('validate-stockout')
+  validateStockout(@Body() body: ValidateStockOutDto[]) {
+    return this.martService.validateStockout(body);
   }
 }

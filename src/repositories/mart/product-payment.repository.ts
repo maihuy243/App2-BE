@@ -29,6 +29,7 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
         'p.totalPrice as "totalPrice"',
         'p.point ',
         'u.username ',
+        'p.id ',
       ])
       .getRawMany();
   }
