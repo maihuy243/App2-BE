@@ -16,7 +16,7 @@ export class MartProductPaymentEntity extends BaseEntity {
   @Column()
   paymentType: TypePaymentEnum;
 
-  @Column()
+  @Column({ nullable: true })
   discountByCoupon: number;
 
   @Column({ default: 0 })

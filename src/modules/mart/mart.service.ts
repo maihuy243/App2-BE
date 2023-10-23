@@ -16,6 +16,8 @@ import { TypePaymentEnum } from 'src/enum/payment.enum';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
 import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
+import { MartProductCouponRepo } from 'src/repositories/mart/product-coupon.repository';
+import { MartProductImportRepo } from 'src/repositories/mart/product-import.repository';
 import { MartProductInventoryRepo } from 'src/repositories/mart/product-inventory.repository';
 import { MartProductPaymentRepo } from 'src/repositories/mart/product-payment.repository';
 import { MartProductRankRepo } from 'src/repositories/mart/product-rank.repository';
@@ -35,6 +37,8 @@ export class MartService {
     private inventoryRepo: MartProductInventoryRepo,
     private authRepo: AuthRepo,
     private rankRepo: MartProductRankRepo,
+    private couponRepo: MartProductCouponRepo,
+    private importRepo: MartProductImportRepo,
   ) {}
 
   async createProduct(body: MartProductDto) {
@@ -359,5 +363,21 @@ export class MartService {
       },
     );
     return new HttpRespone().build({ message: 'add wallet success' });
+  }
+
+  async truncateData() {
+    await this.cartRepo.clear();
+    await this.couponRepo.clear();
+    await this.productCountRepo.clear();
+    await this.importRepo.clear();
+    await this.inventoryRepo.clear();
+    await this.paymentRepo.clear();
+    await this.productRepo.clear();
+
+    await this.productCountRepo.save({ count: 1 });
+
+    return new HttpRespone().build({
+      message: 'Truncate data success',
+    });
   }
 }

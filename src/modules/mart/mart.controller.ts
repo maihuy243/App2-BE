@@ -72,4 +72,9 @@ export class MartController {
   addWallet(@Body() body) {
     return this.martService.addWallet(body);
   }
+
+  @Get('truncate-all')
+  truncateData() {
+    return this.martService.truncateData();
+  }
 }
