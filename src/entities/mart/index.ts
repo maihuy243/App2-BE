@@ -6,3 +6,4 @@ export * from './product-count.entity';
 export * from './product-cart.entity';
 export * from './product-coupon.entity';
 export * from './product-rank.entity';
+export * from '../mart/product-coupon-used.entity';

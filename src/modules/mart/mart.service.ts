@@ -1,10 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
+import { CouponDto } from 'src/dto/mart/coupon.dto';
 import {
   MartCardDto,
   // ProductCardDto,
 } from 'src/dto/mart/mart-product-cart.dto';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
+import { UpdateCouponDto } from 'src/dto/mart/update-coupon.dto';
 import { ValidateStockOutDto } from 'src/dto/mart/validate-stockout.dto';
 import {
   MartProductCartEntity,
@@ -13,10 +15,12 @@ import {
   MartProductPaymentEntity,
   UserEntity,
 } from 'src/entities';
+import { STATUS_COUPON, TYPE_API_UPDATE } from 'src/enum/coupon.enum';
 import { TypePaymentEnum } from 'src/enum/payment.enum';
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductCardRepo } from 'src/repositories/mart/product-card.repository';
 import { MartProductCountRepo } from 'src/repositories/mart/product-count.repository';
+import { MartProductCouponUsedRepo } from 'src/repositories/mart/product-coupon-used.repository';
 import { MartProductCouponRepo } from 'src/repositories/mart/product-coupon.repository';
 import { MartProductImportRepo } from 'src/repositories/mart/product-import.repository';
 import { MartProductInventoryRepo } from 'src/repositories/mart/product-inventory.repository';
@@ -40,6 +44,7 @@ export class MartService {
     private rankRepo: MartProductRankRepo,
     private couponRepo: MartProductCouponRepo,
     private importRepo: MartProductImportRepo,
+    private couponUsedRepo: MartProductCouponUsedRepo,
   ) {}
 
   async createProduct(body: MartProductDto) {
@@ -411,6 +416,105 @@ export class MartService {
     return new HttpRespone().build({
       message: 'Validate success',
       data: listStockOut,
+    });
+  }
+
+  async createCoupon(body: CouponDto) {
+    const checkCodeExist = await this.couponRepo.findOneBy({
+      couponCode: body.couponCode,
+    });
+
+    const checkNameExist = await this.couponRepo.findOneBy({
+      couponName: body.couponName,
+    });
+
+    if (checkCodeExist || checkNameExist) {
+      return new HttpRespone().buildError({
+        message: 'Coupon already exists !',
+      });
+    }
+
+    await this.couponRepo.save(body);
+
+    return new HttpRespone().build({
+      message: 'Create coupon success',
+    });
+  }
+
+  async getCoupon(query) {
+    const listCoupon = await this.couponRepo.findCoupon(query);
+    return new HttpRespone().build({
+      message: 'Get coupon success',
+      data: listCoupon,
+    });
+  }
+
+  async updateCoupon(body: UpdateCouponDto) {
+    let addData = {};
+    const checkExist =
+      body.type === TYPE_API_UPDATE.CHANGE_STATUS
+        ? await this.couponRepo.findOneBy({ id: body.id })
+        : await this.couponRepo.findOneBy({ couponCode: body.couponCode });
+    if (!checkExist) {
+      return new HttpRespone().buildError({
+        message: 'Coupon does not exist ',
+      });
+    }
+
+    if (body.type === TYPE_API_UPDATE.CHANGE_STATUS) {
+      await this.couponRepo.update({ id: body.id }, { status: body.status });
+    } else {
+      if (
+        checkExist.status !== STATUS_COUPON.ACTIVE ||
+        (checkExist.status === STATUS_COUPON.ACTIVE && !checkExist.limit)
+      ) {
+        return new HttpRespone().buildError({
+          message: 'Coupon has expired',
+        });
+      }
+
+      if (!body.userId) {
+        return new HttpRespone().buildError({
+          message: 'User not found',
+        });
+      }
+
+      const checkUsed = await this.couponUsedRepo.findOneBy({
+        userId: body.userId,
+      });
+
+      if (checkUsed) {
+        return new HttpRespone().buildError({
+          message: 'You have used this coupon',
+        });
+      }
+
+      await this.couponRepo.update(
+        { couponCode: body.couponCode },
+        {
+          limit: checkExist.limit - 1 > 0 ? checkExist.limit - 1 : 0,
+          totalUsed: checkExist.totalUsed + 1,
+        },
+      );
+
+      await this.couponUsedRepo.save({
+        userId: body.userId,
+        couponId: checkExist.id,
+      });
+
+      addData = {
+        ...addData,
+        isUse: true,
+        discount: checkExist.discount,
+        typeCoupon: checkExist.type,
+      };
+    }
+    return new HttpRespone().build({
+      ...addData,
+      message:
+        body.type === TYPE_API_UPDATE.CHANGE_STATUS
+          ? 'Update Status success'
+          : ' use coupone success',
     });
   }
 }

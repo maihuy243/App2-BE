@@ -11,6 +11,7 @@ import { MartProductCardRepo } from 'src/repositories/mart/product-card.reposito
 import { AuthRepo } from 'src/repositories/auth.repository';
 import { MartProductRankRepo } from 'src/repositories/mart/product-rank.repository';
 import { MartProductCouponRepo } from 'src/repositories/mart/product-coupon.repository';
+import { MartProductCouponUsedRepo } from 'src/repositories/mart/product-coupon-used.repository';
 
 @Module({
   imports: [],
@@ -25,6 +26,7 @@ import { MartProductCouponRepo } from 'src/repositories/mart/product-coupon.repo
     MartProductCardRepo,
     MartProductRankRepo,
     MartProductCouponRepo,
+    MartProductCouponUsedRepo,
     AuthRepo,
     Util,
   ],

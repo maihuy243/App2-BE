@@ -1,9 +1,21 @@
-import { MartProductCountEntity } from 'src/entities';
+import { MartProductCouponEntity } from 'src/entities';
 import { DataSource, EntityRepository, Repository } from 'typeorm';
 
-@EntityRepository(MartProductCountEntity)
-export class MartProductCouponRepo extends Repository<MartProductCountEntity> {
+@EntityRepository(MartProductCouponEntity)
+export class MartProductCouponRepo extends Repository<MartProductCouponEntity> {
   constructor(private dataSource: DataSource) {
-    super(MartProductCountEntity, dataSource.createEntityManager());
+    super(MartProductCouponEntity, dataSource.createEntityManager());
+  }
+
+  async findCoupon(query: any) {
+    const queryBuild = this.createQueryBuilder('c');
+
+    if (query.status) {
+      queryBuild.andWhere('c.status = :status', {
+        status: query.status,
+      });
+    }
+
+    return await queryBuild.getMany();
   }
 }

@@ -13,6 +13,8 @@ import { MartService } from './mart.service';
 import { MartProductDto } from 'src/dto/mart/mart-product.dto';
 import { MartCardDto } from 'src/dto/mart/mart-product-cart.dto';
 import { ValidateStockOutDto } from 'src/dto/mart/validate-stockout.dto';
+import { CouponDto } from 'src/dto/mart/coupon.dto';
+import { UpdateCouponDto } from 'src/dto/mart/update-coupon.dto';
 
 @Controller('mart')
 @UseGuards(AuthGuard)
@@ -82,5 +84,20 @@ export class MartController {
   @Post('validate-stockout')
   validateStockout(@Body() body: ValidateStockOutDto[]) {
     return this.martService.validateStockout(body);
+  }
+
+  @Post('coupon')
+  createCoupon(@Body() body: CouponDto) {
+    return this.martService.createCoupon(body);
+  }
+
+  @Post('update-coupon')
+  updateCoupon(@Body() body: UpdateCouponDto) {
+    return this.martService.updateCoupon(body);
+  }
+
+  @Get('coupon')
+  getCoupon(@Query() query: any) {
+    return this.martService.getCoupon(query);
   }
 }
