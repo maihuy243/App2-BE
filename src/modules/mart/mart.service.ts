@@ -10,6 +10,7 @@ import { UpdateCouponDto } from 'src/dto/mart/update-coupon.dto';
 import { ValidateStockOutDto } from 'src/dto/mart/validate-stockout.dto';
 import {
   MartProductCartEntity,
+  MartProductCouponEntity,
   MartProductEntity,
   MartProductInventoryEntity,
   MartProductPaymentEntity,
@@ -310,6 +311,34 @@ export class MartService {
         });
       }
 
+      // Set user used coupon
+      if (body.useCoupon) {
+        const getCoupon = await this.couponRepo.findOneBy({
+          couponCode: body.coupon,
+        });
+
+        if (!getCoupon) {
+          await queryRunner.rollbackTransaction();
+          return new HttpRespone().buildError({
+            message: 'Coupon code not found',
+          });
+        }
+
+        await queryRunner.manager.update(
+          MartProductCouponEntity,
+          { couponCode: body.coupon },
+          {
+            limit: getCoupon.limit - 1 > 0 ? getCoupon.limit - 1 : 0,
+            totalUsed: getCoupon.totalUsed + 1,
+          },
+        );
+
+        await queryRunner.manager.save({
+          userId: body.userId,
+          couponId: getCoupon.id,
+        });
+      }
+
       // set tồn kho cho sản phẩm
 
       for (const product of body.products) {
@@ -485,28 +514,13 @@ export class MartService {
         });
       }
 
-      const checkUsed = await this.couponUsedRepo.findOneBy({
-        userId: body.userId,
-      });
+      const checkUsed = await this.couponUsedRepo.checkUsedByUser(body);
 
       if (checkUsed) {
         return new HttpRespone().buildError({
           message: 'You have used this coupon',
         });
       }
-
-      await this.couponRepo.update(
-        { couponCode: body.couponCode },
-        {
-          limit: checkExist.limit - 1 > 0 ? checkExist.limit - 1 : 0,
-          totalUsed: checkExist.totalUsed + 1,
-        },
-      );
-
-      await this.couponUsedRepo.save({
-        userId: body.userId,
-        couponId: checkExist.id,
-      });
 
       addData = {
         ...addData,
