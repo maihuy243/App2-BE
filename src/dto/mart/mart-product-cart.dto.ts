@@ -45,4 +45,7 @@ export class ProductCardDto {
 
   @IsNotEmpty()
   priceDiscount: number;
+
+  @IsOptional()
+  name: string;
 }

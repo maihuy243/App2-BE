@@ -17,9 +17,18 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
       .getRawMany();
   }
 
-  async getListPayment() {
-    return await this.createQueryBuilder('p')
-      .leftJoin(UserEntity, 'u', 'u.id = p.userId')
+  async getListPayment(isAdmin: boolean, id: number) {
+    const query = this.createQueryBuilder('p').leftJoin(
+      UserEntity,
+      'u',
+      'u.id = p.userId',
+    );
+
+    if (isAdmin) {
+      query.where('p.userId = :idUser', { idUser: id });
+    }
+
+    query
       .orderBy('p.date_payment', 'DESC')
       .select([
         'p.date_payment as "datePayment"',
@@ -31,7 +40,8 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
         'p.point ',
         'u.username ',
         'p.id ',
-      ])
-      .getRawMany();
+      ]);
+
+    return await query.getRawMany();
   }
 }

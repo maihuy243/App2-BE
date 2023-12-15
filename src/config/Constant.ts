@@ -3,4 +3,9 @@ export const Constant = {
     LENGTH: 6,
     STRING: '00000',
   },
+
+  ROLE: {
+    ADMIN: 1,
+    USER: 2,
+  },
 };

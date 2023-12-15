@@ -1,4 +1,6 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Constant } from 'src/config/Constant';
 import { HttpRespone } from 'src/config/base-respone.config';
 import { CouponDto } from 'src/dto/mart/coupon.dto';
 import {
@@ -46,6 +48,7 @@ export class MartService {
     private couponRepo: MartProductCouponRepo,
     private importRepo: MartProductImportRepo,
     private couponUsedRepo: MartProductCouponUsedRepo,
+    @Inject(REQUEST) private request: any,
   ) {}
 
   async createProduct(body: MartProductDto) {
@@ -341,21 +344,45 @@ export class MartService {
 
       // set tồn kho cho sản phẩm
 
+      const productOutOfStock: { name: string; stock: number | string }[] = [];
+
       for (const product of body.products) {
         const inventoryByProduct = await this.inventoryRepo.findOneBy({
           productId: product.productId,
         });
 
-        await queryRunner.manager.update(
-          MartProductInventoryEntity,
-          { productId: product.productId },
-          {
-            stockOut:
-              inventoryByProduct.stockOut - product.quantity > 0
-                ? inventoryByProduct.stockOut - product.quantity
-                : 0,
-          },
-        );
+        if (
+          !inventoryByProduct.stockOut ||
+          product.quantity > inventoryByProduct.stockOut
+        ) {
+          const getPrd = await this.productRepo.findOneBy({
+            id: product.productId,
+          });
+
+          productOutOfStock.push({
+            name: getPrd.productName,
+            stock: inventoryByProduct.stockOut,
+          });
+        } else {
+          await queryRunner.manager.update(
+            MartProductInventoryEntity,
+            { productId: product.productId },
+            {
+              stockOut:
+                inventoryByProduct.stockOut - product.quantity > 0
+                  ? inventoryByProduct.stockOut - product.quantity
+                  : 0,
+            },
+          );
+        }
+      }
+
+      if (productOutOfStock.length) {
+        await queryRunner.rollbackTransaction();
+        return new HttpRespone().buildError({
+          message: 'Product has out of stock',
+          data: productOutOfStock,
+        });
       }
 
       await queryRunner.commitTransaction();
@@ -376,7 +403,13 @@ export class MartService {
   }
 
   async getListPayment() {
-    const list = await this.paymentRepo.getListPayment();
+    const { user } = this.request;
+    const isAdmin: boolean = user?.role === Constant.ROLE.ADMIN;
+    let getUser: any;
+    if (!isAdmin) {
+      getUser = await this.authRepo.findOneBy({ username: user?.username });
+    }
+    const list = await this.paymentRepo.getListPayment(isAdmin, getUser?.id);
     return new HttpRespone().build({
       message: 'Get list payment success',
       data: list.map((i) => ({ ...i, data: JSON.parse(i.data) })),
