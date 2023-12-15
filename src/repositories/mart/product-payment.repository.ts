@@ -20,6 +20,7 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
   async getListPayment() {
     return await this.createQueryBuilder('p')
       .leftJoin(UserEntity, 'u', 'u.id = p.userId')
+      .orderBy('p.date_payment', 'DESC')
       .select([
         'p.date_payment as "datePayment"',
         'p.paymentType as "paymentType"',
