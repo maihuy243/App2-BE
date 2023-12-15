@@ -1,4 +1,3 @@
-import { MartModule } from './modules/mart/mart.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOption } from './config/dataSource';
@@ -10,7 +9,6 @@ import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
-    MartModule,
     TypeOrmModule.forRoot(dataSourceOption),
     ConfigModule.forRoot(),
     ApiModule,
