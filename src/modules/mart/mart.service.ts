@@ -234,7 +234,7 @@ export class MartService {
     }
 
     return new HttpRespone().build({
-      data: card.data,
+      data: JSON.parse(card.data || ''),
     });
   }
 
