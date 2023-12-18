@@ -8,4 +8,13 @@ export const Constant = {
     ADMIN: 1,
     USER: 2,
   },
+
+  EXPIRES_URL_S3: 300,
+  PREFIX_BASE: 'excel/',
+  PREFIX_TYPE: {
+    PRODUCTS: 'products/',
+    PAYMENT: 'payments/',
+    PROMOTION: 'promotions/',
+    HISTORY_IMPORT: 'history-import/',
+  },
 };
