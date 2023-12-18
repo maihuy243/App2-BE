@@ -2,9 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { HttpRespone } from 'src/config/base-respone.config';
 import { MartProductRepo } from 'src/repositories/mart/product.repository';
 import * as ExcelJS from 'exceljs';
-import { uploadToS3 } from 'src/config/aws-handle';
+import { uploadToS3 } from 'src/util/s3-services';
 import * as moment from 'moment';
 
+const columnsProducts = [
+  { header: 'Id', key: 'id' },
+  { header: 'Name', key: 'name' },
+  { header: 'Code', key: 'code' },
+];
 @Injectable()
 export class ExportService {
   constructor(private productRepo: MartProductRepo) {}
@@ -20,9 +25,14 @@ export class ExportService {
     } else {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('products');
+      worksheet.columns = columnsProducts;
 
       for (const product of data) {
-        worksheet.addRow(product);
+        worksheet.addRow({
+          id: product.id,
+          name: product.productName,
+          code: product.productCode,
+        });
       }
 
       let buffer: any;
@@ -45,6 +55,7 @@ export class ExportService {
 
       return new HttpRespone().build({
         message: buffer ? 'Export success' : 'Export faild',
+        nameFile: nameFile,
         type: buffer ? 'success' : 'error',
         buffer: buffer,
       });
