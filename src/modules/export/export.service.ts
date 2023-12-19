@@ -64,6 +64,10 @@ export class ExportService {
           buffer = null;
         });
 
+
+      console.log('testCommentFromGitHub');
+      
+
       try {
         if (!buffer) {
           return new HttpRespone().build({
