@@ -43,8 +43,8 @@ export class ExportService {
           code: product.productCode,
           standar: product.standar,
           sale: product.sale,
-          quantity: product.stockOut.toString(),
-          discount: product.discount,
+          stockOut: Number(product.stockOut),
+          discount: Number(product.discount),
           priceDiscount: product.priceDiscount,
           price: product.price,
           type: product.type,
@@ -67,7 +67,7 @@ export class ExportService {
       try {
         if (!buffer) {
           return new HttpRespone().build({
-            message: 'Export faild',
+            message: 'Export faild -- No Buffer',
             type: 'error',
           });
         }
@@ -81,6 +81,8 @@ export class ExportService {
           url: url,
         });
       } catch (error) {
+        console.error('error', error);
+
         return new HttpRespone().build({
           message: 'Export faild',
           type: 'error',

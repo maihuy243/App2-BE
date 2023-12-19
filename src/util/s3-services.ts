@@ -15,11 +15,11 @@ export async function uploadToS3(data: any, prefix: string) {
     Body: data,
   };
 
-  return new Promise((res, rej) => {
+  return new Promise((resolve, reject) => {
     s3.putObject(params, (err) => {
       if (err) {
-        rej('upload file faild !');
-      } else res('upload file success');
+        reject('upload file faild !');
+      } else resolve('upload file success');
     });
   });
 }
@@ -32,12 +32,12 @@ export async function getObjectS3(prefix: string) {
     Key: PREFIX_BASE + prefix,
   };
 
-  return new Promise((res, rej) => {
+  return new Promise((resolve, reject) => {
     s3.getObject(params, (err, data) => {
       if (err) {
-        rej('Get Object Faild in --- ' + PREFIX_BASE + prefix);
+        reject('Get Object Faild in --- ' + PREFIX_BASE + prefix);
       } else {
-        res(data.Body);
+        resolve(data.Body);
       }
     });
   });
@@ -52,10 +52,10 @@ export async function getUrlFromS3(prefix: string) {
     Expires: EXPIRES_URL,
   };
 
-  return new Promise((res, rej) => {
+  return new Promise((resolve, reject) => {
     s3.getSignedUrl('getObject', params, function (err, url) {
-      if (err) rej(err);
-      res(url);
+      if (err) reject(err);
+      resolve(url);
     });
   });
 }
