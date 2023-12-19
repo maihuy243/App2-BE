@@ -24,7 +24,7 @@ export class MartProductPaymentRepo extends Repository<MartProductPaymentEntity>
       'u.id = p.userId',
     );
 
-    if (isAdmin) {
+    if (!isAdmin) {
       query.where('p.userId = :idUser', { idUser: id });
     }
 

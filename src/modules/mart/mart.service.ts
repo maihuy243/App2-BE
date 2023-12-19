@@ -350,6 +350,8 @@ export class MartService {
         const inventoryByProduct = await this.inventoryRepo.findOneBy({
           productId: product.productId,
         });
+        console.log('inventory', inventoryByProduct);
+        console.log('product', product.productId);
 
         if (
           !inventoryByProduct.stockOut ||
